@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Test Model{% endblock %}
+{% block meta_description %}Run a live life expectancy prediction using the deployed Random Forest Regressor model.{% endblock %}
+
+{% block content %}
+<section class="vx-dashboard py-5">
+  <div class="container">
+
+    <!-- ── Page Header ───────────────────────────────────────────────── -->
+    <div class="vx-dashboard-banner mb-5 vx-animate-fade-in-up">
+      <div class="row align-items-center gy-3">
+        <div class="col-auto">
+          <div class="vx-avatar" style="background-color: var(--vx-primary);">
+            <i class="bi bi-play-fill" style="font-size:1.3rem;"></i>
+          </div>
+        </div>
+        <div class="col">
+          <p class="vx-dashboard-greeting mb-0">LIVE INFERENCE</p>
+          <h1 class="vx-dashboard-username mb-0">Test Model</h1>
+        </div>
+        <div class="col-auto">
+          <a href="{{ url_for('main.dashboard') }}" class="btn vx-btn-outline-light btn-sm d-flex align-items-center gap-2">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 align-items-start">
+
+      <!-- ── Input Form ────────────────────────────────────────────── -->
+      <div class="col-lg-6">
+        <div class="vx-card">
+          <div class="vx-card-header d-flex align-items-center gap-2">
+            <i class="bi bi-sliders vx-text-primary"></i>
+            Input Parameters
+          </div>
+          <div class="vx-card-body">
+
+            <p class="text-muted small mb-4">
+              Fill in all fields below to estimate <strong>life expectancy</strong> using the deployed
+              <strong>Random Forest Regressor</strong> model.
+            </p>
+
+            <form method="POST" action="{{ url_for('main.test_model') }}" id="predictionForm" novalidate>
+
+              <!-- Error / Result flash area -->
+              {% if result and not result.success %}
+              <div class="alert alert-danger vx-alert mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {{ result.error }}
+              </div>
+              {% endif %}
+
+              <div class="row g-3">
+
+                <!-- GDP per Capita -->
+                <div class="col-sm-6">
+                  <label class="vx-form-label" for="GDP_per_capita">
+                    <i class="bi bi-cash-stack me-1 vx-text-primary"></i>GDP per Capita (USD)
+                  </label>
+                  <input
+                    type="number" class="form-control vx-input-field"
+                    id="GDP_per_capita" name="GDP_per_capita"
+                    min="{{ options.GDP_per_capita.min }}" max="{{ options.GDP_per_capita.max }}"
+                    step="{{ options.GDP_per_capita.step }}"
+                    placeholder="{{ options.GDP_per_capita.placeholder }}"
+                    value="{{ result.input_summary.GDP_per_capita if result and result.input_summary else '' }}"
+                    required
+                  />
+                  <div class="vx-form-hint">Range: {{ options.GDP_per_capita.min }} – {{ options.GDP_per_capita.max }}</div>
+                </div>
+
+                <!-- Schooling -->
+                <div class="col-sm-6">
+                  <label class="vx-form-label" for="Schooling">
+                    <i class="bi bi-mortarboard me-1 text-success"></i>Schooling (years)
+                  </label>
+                  <input
+                    type="number" class="form-control vx-input-field"
+                    id="Schooling" name="Schooling"
+                    min="{{ options.Schooling.min }}" max="{{ options.Schooling.max }}"
+                    step="{{ options.Schooling.step }}"
+                    placeholder="{{ options.Schooling.placeholder }}"
+                    value="{{ result.input_summary.Schooling if result and result.input_summary else '' }}"
+                    required
+                  />
+                  <div class="vx-form-hint">Range: {{ options.Schooling.min }} – {{ options.Schooling.max }}</div>
+                </div>
+
+                <!-- Adult Mortality -->
+                <div class="col-sm-6">
+                  <label class="vx-form-label" for="Adult_mortality">
+                    <i class="bi bi-heart-pulse me-1 text-danger"></i>Adult Mortality
+                  </label>
+                  <input
+                    type="number" class="form-control vx-input-field"
+                    id="Adult_mortality" name="Adult_mortality"
+                    min="{{ options.Adult_mortality.min }}" max="{{ options.Adult_mortality.max }}"
+                    step="{{ options.Adult_mortality.step }}"
+                    placeholder="{{ options.Adult_mortality.placeholder }}"
+                    value="{{ result.input_summary.Adult_mortality if result and result.input_summary else '' }}"
+                    required
+                  />
+                  <div class="vx-form-hint">Deaths per 1000 adults · {{ options.Adult_mortality.min }} – {{ options.Adult_mortality.max }}</div>
+                </div>
+
+                <!-- BMI -->
+                <div class="col-sm-6">
+                  <label class="vx-form-label" for="BMI">
+                    <i class="bi bi-person-arms-up me-1 text-warning"></i>BMI
+                  </label>
+                  <input
+                    type="number" class="form-control vx-input-field"
+                    id="BMI" name="BMI"
+                    min="{{ options.BMI.min }}" max="{{ options.BMI.max }}"
+                    step="{{ options.BMI.step }}"
+                    placeholder="{{ options.BMI.placeholder }}"
+                    value="{{ result.input_summary.BMI if result and result.input_summary else '' }}"
+                    required
+                  />
+                  <div class="vx-form-hint">Body Mass Index · {{ options.BMI.min }} – {{ options.BMI.max }}</div>
+                </div>
+
+                <!-- Submit -->
+                <div class="col-12 pt-2">
+                  <button type="submit" class="btn vx-btn-primary w-100 d-flex align-items-center justify-content-center gap-2" id="btnPredict">
+                    <i class="bi bi-cpu-fill"></i>
+                    Run Prediction
+                  </button>
+                </div>
+
+              </div><!-- /row g-3 -->
+            </form>
+
+          </div>
+        </div>
+      </div><!-- /form col -->
+
+      <!-- ── Result Panel ──────────────────────────────────────────── -->
+      <div class="col-lg-6">
+
+        {% if result and result.success %}
+        <!-- SUCCESS RESULT -->
+        <div class="vx-result-card vx-animate-fade-in-up mb-4" id="predictionResult">
+          <div class="vx-result-header">
+            <div class="vx-result-icon">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div>
+              <p class="vx-result-label mb-0">Predicted Life Expectancy</p>
+              <h2 class="vx-result-value mb-0">{{ result.formatted }}</h2>
+            </div>
+          </div>
+          <div class="vx-result-divider"></div>
+          <div class="vx-result-summary">
+            <p class="vx-result-summary-title mb-2">
+              <i class="bi bi-list-check me-2"></i>Input Summary
+            </p>
+            <div class="row g-2">
+              {% for key, val in result.input_summary.items() %}
+              <div class="col-sm-6">
+                <div class="vx-summary-item">
+                  <span class="vx-summary-key">{{ info.feature_labels.get(key, key | replace('_', ' ')) }}</span>
+                  <span class="vx-summary-val">{{ val }}</span>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Model Info Sidebar -->
+        <div class="vx-card {% if not (result and result.success) %}vx-card-highlighted{% endif %}">
+          <div class="vx-card-header d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle-fill vx-text-primary"></i>
+            Model Details
+          </div>
+          <div class="vx-card-body">
+            <table class="vx-model-info-table w-100">
+              <tbody>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-tag me-2 vx-text-primary"></i>Model</td>
+                  <td class="vx-info-value">Life Expectancy Model</td>
+                </tr>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-diagram-3 me-2 text-success"></i>Algorithm</td>
+                  <td class="vx-info-value">Random Forest Regressor</td>
+                </tr>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-graph-up me-2 vx-text-accent"></i>R² Score</td>
+                  <td class="vx-info-value"><strong class="text-success">{{ info.metrics.r2 if info.metrics else 'N/A' }}</strong></td>
+                </tr>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-arrows-expand-vertical me-2 text-danger"></i>MAE</td>
+                  <td class="vx-info-value">{{ info.metrics.mae if info.metrics else 'N/A' }} years</td>
+                </tr>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-reception-4 me-2 text-warning"></i>RMSE</td>
+                  <td class="vx-info-value">{{ info.metrics.rmse if info.metrics else 'N/A' }} years</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="vx-feature-tags mt-4">
+              <p class="text-muted small fw-semibold mb-2">Input Features Used:</p>
+              <div class="d-flex flex-wrap gap-2">
+                {% for col in ['GDP per Capita', 'Schooling', 'Adult Mortality', 'BMI'] %}
+                <span class="vx-feature-tag-pill">{{ col }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Guide card when no result yet -->
+        {% if not (result and result.success) %}
+        <div class="vx-card mt-4">
+          <div class="vx-card-header d-flex align-items-center gap-2">
+            <i class="bi bi-lightbulb-fill text-warning"></i>
+            How It Works
+          </div>
+          <div class="vx-card-body">
+            <ul class="vx-checklist">
+              <li>
+                <i class="bi bi-1-circle-fill vx-text-primary me-2"></i>
+                <div>Fill in all <strong>4 input fields</strong> on the left</div>
+              </li>
+              <li>
+                <i class="bi bi-2-circle-fill vx-text-accent me-2"></i>
+                <div>Click <strong>Run Prediction</strong> to submit</div>
+              </li>
+              <li>
+                <i class="bi bi-3-circle-fill text-success me-2"></i>
+                <div>The model returns an <strong>estimated life expectancy</strong> in years</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+
+      </div><!-- /result col -->
+    </div><!-- /row -->
+
+  </div><!-- /container -->
+</section>
+{% endblock %}

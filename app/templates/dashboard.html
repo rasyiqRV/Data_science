@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block meta_description %}Model deployment dashboard – Life Expectancy Prediction Model analytics and performance metrics.{% endblock %}
+
+{% block content %}
+<section class="vx-dashboard py-5">
+  <div class="container">
+
+    <!-- ── Welcome Banner ───────────────────────────────────────────── -->
+    <div class="vx-dashboard-banner mb-5 vx-animate-fade-in-up">
+      <div class="row align-items-center gy-3">
+        <div class="col-auto">
+          <div class="vx-avatar vx-avatar-purple">
+            {{ (current_user.username | first | default('U')) | upper }}
+          </div>
+        </div>
+        <div class="col">
+          <p class="vx-dashboard-greeting mb-0">DEVELOPER PANEL</p>
+          <h1 class="vx-dashboard-username mb-0">{{ current_user.username }}</h1>
+        </div>
+        <div class="col-auto d-flex align-items-center gap-3">
+          <p class="text-muted small mb-0">
+            <i class="bi bi-calendar3 me-1"></i>{{ current_date }}
+          </p>
+          <a href="{{ url_for('main.test_model') }}" class="btn vx-btn-accent btn-sm d-flex align-items-center gap-2">
+            <i class="bi bi-play-circle-fill"></i> Test Model
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Status Stats Row ──────────────────────────────────────────── -->
+    <div class="row g-4 mb-5">
+      <div class="col-sm-6 col-xl-3">
+        <div class="vx-stat-card">
+          <div class="vx-stat-icon vx-text-primary"><i class="bi bi-cpu-fill"></i></div>
+          <div class="vx-stat-label">Active Deployments</div>
+          <div class="vx-stat-value vx-text-blue">1 Model</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="vx-stat-card">
+          <div class="vx-stat-icon vx-text-accent"><i class="bi bi-speedometer2"></i></div>
+          <div class="vx-stat-label">Model Status</div>
+          <div class="vx-stat-value text-success">Online ✓</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="vx-stat-card">
+          <div class="vx-stat-icon text-success"><i class="bi bi-graph-up-arrow"></i></div>
+          <div class="vx-stat-label">R² Score</div>
+          <div class="vx-stat-value vx-text-purple">{{ info.metrics.r2 if info.metrics else '0.9871' }}</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="vx-stat-card">
+          <div class="vx-stat-icon text-warning"><i class="bi bi-database-check"></i></div>
+          <div class="vx-stat-label">Dataset Size</div>
+          <div class="vx-stat-value text-dark">{{ "{:,}".format(info.dataset_rows) if info.dataset_rows else '2,864' }} Rows</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Model Info + Performance Metrics ─────────────────────────── -->
+    <div class="row g-4 mb-5">
+
+      <!-- Model Information -->
+      <div class="col-lg-6">
+        <div class="vx-card h-100">
+          <div class="vx-card-header d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle-fill vx-text-primary"></i>
+            Model Information
+          </div>
+          <div class="vx-card-body">
+            <table class="vx-model-info-table w-100">
+              <tbody>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-tag me-2 vx-text-primary"></i>Model Name</td>
+                  <td class="vx-info-value">Life Expectancy Prediction Model</td>
+                </tr>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-bookmark me-2 vx-text-accent"></i>Version</td>
+                  <td class="vx-info-value"><span class="vx-version-badge">v1.0.0</span></td>
+                </tr>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-diagram-3 me-2 text-success"></i>Algorithm</td>
+                  <td class="vx-info-value">Random Forest Regressor</td>
+                </tr>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-calendar-check me-2 text-warning"></i>Training Date</td>
+                  <td class="vx-info-value">{{ info.training_date if info.training_date else 'N/A' }}</td>
+                </tr>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-table me-2 text-info"></i>Dataset Size</td>
+                  <td class="vx-info-value">{{ "{:,}".format(info.dataset_rows) if info.dataset_rows else '2,864' }} rows × {{ info.dataset_cols if info.dataset_cols else 21 }} columns</td>
+                </tr>
+                <tr>
+                  <td class="vx-info-label"><i class="bi bi-bullseye me-2 vx-text-primary"></i>Target</td>
+                  <td class="vx-info-value">Life Expectancy (Regression)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance Metrics -->
+      <div class="col-lg-6">
+        <div class="vx-card h-100">
+          <div class="vx-card-header d-flex align-items-center gap-2">
+            <i class="bi bi-bar-chart-fill vx-text-accent"></i>
+            Performance Metrics
+          </div>
+          <div class="vx-card-body">
+            <p class="text-muted small mb-4">Evaluation on held-out test set from the training dataset.</p>
+
+            <!-- MAE -->
+            <div class="vx-metric-row mb-4">
+              <div class="d-flex justify-content-between align-items-baseline mb-1">
+                <span class="vx-metric-label">
+                  <i class="bi bi-arrows-expand-vertical me-2 text-danger"></i>
+                  Mean Absolute Error <span class="text-muted">(MAE)</span>
+                </span>
+                <span class="vx-metric-value text-danger">{{ info.metrics.mae if info.metrics else '0.77' }}</span>
+              </div>
+              <div class="vx-metric-bar-track">
+                <div class="vx-metric-bar vx-bar-danger" style="width: 15%;"></div>
+              </div>
+              <p class="vx-metric-hint">Average prediction error in years</p>
+            </div>
+
+            <!-- RMSE -->
+            <div class="vx-metric-row mb-4">
+              <div class="d-flex justify-content-between align-items-baseline mb-1">
+                <span class="vx-metric-label">
+                  <i class="bi bi-reception-4 me-2 text-warning"></i>
+                  Root Mean Sq. Error <span class="text-muted">(RMSE)</span>
+                </span>
+                <span class="vx-metric-value text-warning">{{ info.metrics.rmse if info.metrics else '1.03' }}</span>
+              </div>
+              <div class="vx-metric-bar-track">
+                <div class="vx-metric-bar vx-bar-warning" style="width: 20%;"></div>
+              </div>
+              <p class="vx-metric-hint">Penalizes larger errors more heavily (years)</p>
+            </div>
+
+            <!-- R² -->
+            <div class="vx-metric-row">
+              <div class="d-flex justify-content-between align-items-baseline mb-1">
+                <span class="vx-metric-label">
+                  <i class="bi bi-graph-up-arrow me-2 text-success"></i>
+                  R² Score <span class="text-muted">(Coefficient of Determination)</span>
+                </span>
+                <span class="vx-metric-value text-success">{{ info.metrics.r2 if info.metrics else '0.9871' }}</span>
+              </div>
+              <div class="vx-metric-bar-track">
+                <div class="vx-metric-bar vx-bar-success" style="width: {{ (info.metrics.r2 * 100) if info.metrics else 98.71 }}%;"></div>
+              </div>
+              <p class="vx-metric-hint">{{ (info.metrics.r2 * 100) | round(2) if info.metrics else '98.71' }}% of variance explained — Excellent fit</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /model info + metrics -->
+
+    <!-- ── Data Analytics ────────────────────────────────────────────── -->
+    <div class="row g-4 mb-5">
+
+      <div class="col-12">
+        <div class="vx-section-divider mb-1">
+          <i class="bi bi-bar-chart-line-fill me-2 vx-text-primary"></i>
+          <span>Data Analytics</span>
+        </div>
+        <p class="text-muted small mb-0">Visual insights from the training dataset used to build this model.</p>
+      </div>
+
+      <!-- Life Expectancy Distribution -->
+      <div class="col-lg-6">
+        <div class="vx-card h-100">
+          <div class="vx-card-header d-flex align-items-center gap-2">
+            <i class="bi bi-heart-pulse vx-text-primary"></i>
+            Life Expectancy Distribution
+          </div>
+          <div class="vx-card-body p-0">
+            <div class="vx-chart-container">
+              <img
+                src="{{ url_for('static', filename='img/life_expectancy_distribution.png') }}"
+                alt="Life Expectancy Distribution Chart"
+                class="vx-chart-img"
+                id="lifeExpectancyDistributionChart"
+              />
+            </div>
+            <div class="vx-chart-caption">
+              <i class="bi bi-info-circle me-1"></i>
+              Distribution of life expectancy across all {{ "{:,}".format(info.dataset_rows) if info.dataset_rows else '2,864' }} records in the dataset.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Importance -->
+      <div class="col-lg-6">
+        <div class="vx-card h-100">
+          <div class="vx-card-header d-flex align-items-center gap-2">
+            <i class="bi bi-stars vx-text-accent"></i>
+            Feature Importance
+          </div>
+          <div class="vx-card-body p-0">
+            <div class="vx-chart-container">
+              <img
+                src="{{ url_for('static', filename='img/feature_importance.png') }}"
+                alt="Feature Importance Chart"
+                class="vx-chart-img"
+                id="featureImportanceChart"
+              />
+            </div>
+            <div class="vx-chart-caption">
+              <i class="bi bi-info-circle me-1"></i>
+              Top features ranked by their contribution to prediction accuracy.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /analytics -->
+
+    <!-- ── Quick Actions ─────────────────────────────────────────────── -->
+    <div class="row g-4">
+      <div class="col-12">
+        <div class="vx-card">
+          <div class="vx-card-header d-flex align-items-center gap-2">
+            <i class="bi bi-lightning-fill text-warning"></i>
+            Quick Actions
+          </div>
+          <div class="vx-card-body">
+            <div class="row g-3">
+              <div class="col-sm-6 col-md-4">
+                <a href="{{ url_for('main.test_model') }}" class="vx-action-tile" id="actionTestModel">
+                  <div class="vx-action-icon vx-icon-purple">
+                    <i class="bi bi-play-circle-fill"></i>
+                  </div>
+                  <div>
+                    <div class="vx-action-title">Test Model</div>
+                    <div class="vx-action-sub">Run a live life expectancy prediction</div>
+                  </div>
+                </a>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <a href="{{ url_for('main.dashboard') }}" class="vx-action-tile" id="actionRefreshDashboard">
+                  <div class="vx-action-icon vx-icon-blue">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </div>
+                  <div>
+                    <div class="vx-action-title">Refresh Dashboard</div>
+                    <div class="vx-action-sub">Reload model status & metrics</div>
+                  </div>
+                </a>
+              </div>
+              <div class="col-sm-6 col-md-4">
+                <a href="https://github.com/Tedshub/Vertix" target="_blank" class="vx-action-tile" id="actionViewDocs">
+                  <div class="vx-action-icon vx-icon-green">
+                    <i class="bi bi-book-fill"></i>
+                  </div>
+                  <div>
+                    <div class="vx-action-title">Documentation</div>
+                    <div class="vx-action-sub">View Vertix framework guide</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /quick actions -->
+
+  </div><!-- /container -->
+</section>
+{% endblock %}
