@@ -1,0 +1,19 @@
+# ─────────────────────────────────────────────────────────────────
+#  render.yaml
+#  Vertix – Render Blueprint for one-click deployment.
+#  Render will auto-detect this file when you create a Blueprint.
+# ─────────────────────────────────────────────────────────────────
+services:
+  - type: web
+    name: vertix-life-expectancy
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true        # Render generates a strong random key
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.10.0"
