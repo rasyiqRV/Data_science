@@ -309,6 +309,53 @@ veltrix/
 
 ---
 
+## Deployment (alternatives to Render)
+
+The repo includes a **`Dockerfile`** so the app runs in the browser on almost any host.
+The trained model (`app/static/models/*.pkl`) is committed, so no training step is needed on the server.
+Always set a strong `SECRET_KEY` and `FLASK_ENV=production` on every platform.
+
+> Note: free tiers use an **ephemeral filesystem**, so the SQLite database
+> (`instance/database.db`) resets on each redeploy/restart. That's fine for a demo.
+> For persistent accounts, attach a managed Postgres and set `DATABASE_URL`.
+
+### Option A — Hugging Face Spaces (free, best for ML demos)
+
+1. Create a new Space → **SDK: Docker** → **Blank**.
+2. Push this repo to the Space (or connect the GitHub repo).
+3. In Space **Settings → Variables and secrets**, add:
+   - `SECRET_KEY` = a long random string
+   - `FLASK_ENV` = `production`
+4. The `Dockerfile` exposes port **7860** (the Spaces default), so it just works.
+
+### Option B — Railway (free trial, simplest "like Render")
+
+1. [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo**.
+2. Railway auto-detects the `Dockerfile` (or the `Procfile`). No build config needed.
+3. Add variables: `SECRET_KEY` and `FLASK_ENV=production`.
+4. Under **Settings → Networking**, click **Generate Domain** to get a public URL.
+
+### Option C — Fly.io (free allowance, Docker-based)
+
+```bash
+# Install flyctl, then from the project root:
+fly launch --no-deploy        # pick a unique app name & region (uses fly.toml)
+fly secrets set SECRET_KEY=$(python -c "import secrets;print(secrets.token_hex(32))")
+fly secrets set FLASK_ENV=production
+fly deploy
+```
+
+### Option D — Any Docker host (Cloud Run, Koyeb, local, VPS)
+
+```bash
+docker build -t vertix .
+docker run -p 8080:8080 -e PORT=8080 \
+  -e SECRET_KEY="change-me" -e FLASK_ENV=production vertix
+# open http://localhost:8080
+```
+
+---
+
 ## License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.

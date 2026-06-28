@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Secrets / local config
+.env
+
+# Local SQLite database (let the container create a fresh one)
+instance/database.db
+
+# Notebooks & datasets (not needed at runtime)
+*.ipynb
+Life-Expectancy-Data-Updated.csv
+
+# Git / editor
+.git/
+.gitignore
+.vscode/

@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────────────────────────
+#  fly.toml
+#  Vertix – Fly.io deployment config.
+#  Run `fly launch --no-deploy` once to set a unique app name & region,
+#  then `fly deploy`. Set SECRET_KEY with:
+#    fly secrets set SECRET_KEY=$(python -c "import secrets;print(secrets.token_hex(32))")
+# ─────────────────────────────────────────────────────────────────
+
+app = "vertix-life-expectancy"
+primary_region = "sin"   # Singapore – change to your nearest region
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  FLASK_ENV = "production"
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
